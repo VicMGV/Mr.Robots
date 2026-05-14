@@ -278,3 +278,22 @@ class TestLLMLocal:
     def test_llm_clean_prompt(self, detector_llm):
         result = detector_llm.analyze("Explain the quicksort algorithm")
         assert result.action in (Action.ALLOW, Action.WARN)
+
+if __name__ == "__main__":
+    from gateway.threat_detector import ThreatDetector, Action
+
+    detector = ThreatDetector(use_llm=False)
+    
+    prompt = input("\nEnter a prompt to test: ")
+    result = detector.analyze(prompt)
+
+    print("\n" + "═" * 50)
+    print(f"  Action     : {result.action.value.upper()}")
+    print(f"  Threat     : {result.threat_type.value}")
+    print(f"  Risk Score : {result.risk_score}")
+    print(f"  Confidence : {result.confidence}")
+    if result.details:
+        print(f"  Details    :")
+        for d in result.details:
+            print(f"    {d}")
+    print("═" * 50)
