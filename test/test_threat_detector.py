@@ -14,7 +14,7 @@ from gateway.threat_detector import (
 
 @pytest.fixture
 def detector():
-    return ThreatDetector(use_llm=False)
+    return ThreatDetector(use_llm=True)
 
 
 @pytest.fixture
@@ -282,7 +282,7 @@ class TestLLMLocal:
 if __name__ == "__main__":
     from gateway.threat_detector import ThreatDetector, Action
 
-    detector = ThreatDetector(use_llm=False)
+    detector = ThreatDetector(use_llm=True)
 
     prompt = input("\nEnter a prompt to test: ")
     result = detector.analyze(prompt)
