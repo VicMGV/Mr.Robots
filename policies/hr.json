@@ -16,5 +16,5 @@
   ],
   "max_prompt_length": 3000,
   "allow_external_providers": false,
-  "notes": "Datos sensibles de empleados. Modelos restringidos. Sin acceso externo."
+  "notes": "Sensitive employee data. Restricted models. No external access."
 }

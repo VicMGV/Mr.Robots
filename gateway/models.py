@@ -26,18 +26,18 @@ class ThreatType(str, Enum):
 
 class AIRequest(BaseModel):
 
-    prompt: str = Field(..., description="Prompt enviado por el usuario")
+    prompt: str = Field(..., description="Prompt sent by the user")
     preferred_model: Optional[ModelProvider] = Field(
         default=None,
-        description="Modelo preferido. El router puede ignorarlo según políticas."
+        description="Preferred model. The router may override it based on policies."
     )
     department: Optional[str] = Field(
         default=None,
-        description="Departamento del solicitante."
+        description="Requester's department."
     )
     metadata: Optional[dict] = Field(
         default_factory=dict,
-        description="Información adicional de contexto."
+        description="Additional context information."
     )
 
 
@@ -54,7 +54,7 @@ class NormalizedRequest(BaseModel):
 class ThreatAnalysis(BaseModel):
     request_id: str
     threat_type: ThreatType
-    risk_score: float = Field(..., ge=0.0, le=1.0, description="Score de 0.0 a 1.0")
+    risk_score: float = Field(..., ge=0.0, le=1.0, description="Score from 0.0 to 1.0")
     confidence: float = Field(..., ge=0.0, le=1.0)
     action: ThreatAction
     reason: Optional[str] = None
@@ -65,7 +65,6 @@ class PolicyResult(BaseModel):
     allowed: bool
     assigned_model: Optional[ModelProvider]
     reason: Optional[str] = None
-
 
 
 class AIResponse(BaseModel):

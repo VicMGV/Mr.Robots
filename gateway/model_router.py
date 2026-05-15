@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from models import ModelProvider, NormalizedRequest, PolicyResult
+from gateway.models import ModelProvider, NormalizedRequest, PolicyResult
 
 logger = logging.getLogger(__name__)
 

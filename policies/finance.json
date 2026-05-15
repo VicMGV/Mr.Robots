@@ -1,1 +1,18 @@
-
+{
+  "department": "finance",
+  "allowed_models": ["gemini", "internal"],
+  "blocked_actions": [
+    "external_email",
+    "external_export",
+    "file_upload"
+  ],
+  "blocked_keywords": [
+    "wire transfer",
+    "account number",
+    "routing number",
+    "social security"
+  ],
+  "max_prompt_length": 2000,
+  "allow_external_providers": false,
+  "notes": "High-risk department. Internal or Gemini models only. No data export."
+}
