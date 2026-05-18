@@ -1,0 +1,25 @@
+# API Framework
+fastapi
+uvicorn
+
+# Validación de datos
+pydantic
+pydantic-settings
+
+# HTTP client (para llamar a proveedores de IA)
+httpx
+requests
+
+# Variables de entorno
+python-dotenv
+
+# Seguridad / Auth
+python-jose
+
+# Testing
+pytest
+pytest-asyncio
+
+# ML
+transformers
+torch

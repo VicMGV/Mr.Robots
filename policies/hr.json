@@ -1,0 +1,20 @@
+{
+  "department": "hr",
+  "allowed_models": ["gemini", "internal"],
+  "blocked_actions": [
+    "external_email",
+    "external_export",
+    "file_upload",
+    "web_search"
+  ],
+  "blocked_keywords": [
+    "salary",
+    "personal data",
+    "employee record",
+    "termination",
+    "social security"
+  ],
+  "max_prompt_length": 3000,
+  "allow_external_providers": false,
+  "notes": "Sensitive employee data. Restricted models. No external access."
+}

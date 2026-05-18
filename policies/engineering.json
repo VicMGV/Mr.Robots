@@ -1,0 +1,22 @@
+{
+  "department": "engineering",
+  "allowed_models": [
+    "gemini",
+    "claude",
+    "openai",
+    "groq",
+    "internal"
+  ],
+  "blocked_actions": [
+    "external_export"
+  ],
+  "blocked_keywords": [
+    "production credentials",
+    "api key",
+    "private key",
+    "secret key"
+  ],
+  "max_prompt_length": 8000,
+  "allow_external_providers": true,
+  "notes": "Technical department. Broad model access. No credential export."
+}
