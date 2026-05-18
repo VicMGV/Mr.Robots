@@ -6,6 +6,7 @@ class ModelProvider(str, Enum):
     OPENAI   = "openai"
     GEMINI   = "gemini"
     CLAUDE   = "claude"
+    GROQ     = "groq"
     INTERNAL = "internal"
 
 

@@ -1,6 +1,12 @@
 {
   "department": "engineering",
-  "allowed_models": ["gemini", "claude", "openai", "internal"],
+  "allowed_models": [
+    "gemini",
+    "claude",
+    "openai",
+    "groq",
+    "internal"
+  ],
   "blocked_actions": [
     "external_export"
   ],

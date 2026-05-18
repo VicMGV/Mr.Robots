@@ -8,6 +8,13 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+# ML layer import
+try:
+    from ml.classifier import ml_classifier
+    ML_AVAILABLE = True
+except ImportError:
+    ML_AVAILABLE = False
+
 
 class ThreatType(str, Enum):
     PROMPT_INJECTION  = "prompt_injection"
@@ -99,7 +106,7 @@ RULES: dict[ThreatType, list[str]] = {
         r"(read|write|delete)\s+files?\s+(from|on|in)\s+(the\s+)?(server|system)",
     ],
     ThreatType.UNSAFE_BEHAVIOR: [
-        r"how\s+to\s+(make|create|build|synthesize)\s+(a\s+)?(bomb|weapon|malware|virus|exploit)",
+        r"how\s+(to\s+|do\s+i\s+)?(make|create|build|synthesize)\s+(a\s+)?(bomb|weapon|malware|virus|exploit)",
         r"(generate|write|create)\s+(malware|ransomware|spyware|trojan|keylogger)",
         r"write\s+.{0,15}keylogger",
         r"\bself[-\s]harm\b",
@@ -107,7 +114,22 @@ RULES: dict[ThreatType, list[str]] = {
         r"how\s+(to\s+)?(hack|crack|exploit)\s+(a\s+)?(system|server|account|website)",
         r"(make|synthesize|produce)\s+(illegal\s+)?(drugs?|controlled\s+substances?|poison)",
         r"synthesize\s+.{0,15}drugs?",
+        
     ],
+    
+    ThreatType.UNSAFE_BEHAVIOR: [
+    r"how\s+(to\s+|do\s+i\s+|i\s+do\s+|can\s+i\s+|would\s+i\s+)?(make|create|build|synthesize)\s+(a\s+)?(bomb|weapon|malware|virus|exploit)",
+    r"how\s+(do\s+i|can\s+i|would\s+i)\s+(make|build|create)",
+    r"steps\s+to\s+(make|build|create)\s+(a\s+)?(bomb|weapon)",
+    r"tutorial\s+(for|on)\s+(making|building)\s+(a\s+)?(bomb|weapon)",
+    r"(generate|write|create)\s+(malware|ransomware|spyware|trojan|keylogger)",
+    r"write\s+.{0,15}keylogger",
+    r"\bself[-\s]harm\b",
+    r"illegal\s+(activity|operation|action)",
+    r"how\s+(to\s+)?(hack|crack|exploit)\s+(a\s+)?(system|server|account|website)",
+    r"(make|synthesize|produce)\s+(illegal\s+)?(drugs?|controlled\s+substances?|poison)",
+    r"synthesize\s+.{0,15}drugs?",
+],
 }
 
 _COMPILED_RULES: dict[ThreatType, list[re.Pattern]] = {
@@ -234,11 +256,6 @@ def _parse_llm_response(raw: str) -> Optional[dict]:
     except (json.JSONDecodeError, ValueError) as e:
         logger.error(f"LLM parse error: {e} | Raw: {raw[:200]}")
         return None
-        parsed["confidence"] = max(0.0, min(float(parsed["confidence"]), 1.0))
-        return parsed
-    except (json.JSONDecodeError, ValueError) as e:
-        logger.error(f"LLM parse error: {e} | Raw: {raw[:200]}")
-        return None
 
 
 def _run_llm(prompt: str) -> Optional[dict]:
@@ -248,8 +265,8 @@ def _run_llm(prompt: str) -> Optional[dict]:
             "prompt": _LLM_PROMPT_TEMPLATE.format(prompt=prompt[:MAX_LLM_CHARS]),
             "stream": False,
             "options": {
-            "temperature": 0.1,
-            "num_predict": 150,
+                "temperature": 0.1,
+                "num_predict": 150,
             }
         }
         response = requests.post(OLLAMA_URL, json=payload, timeout=120)
@@ -279,16 +296,23 @@ def _determine_action(risk_score: float) -> Action:
 
 
 class ThreatDetector:
-    def __init__(self, use_llm: bool = False):
+    def __init__(self, use_llm: bool = False, use_ml: bool = True):
         self.use_llm = use_llm
+        self.use_ml = use_ml and ML_AVAILABLE
+
+        # Load ML model at startup
+        if self.use_ml:
+            ml_classifier.load()
 
     def analyze(self, prompt: str, context: Optional[dict] = None) -> ThreatResult:
         all_details: list[str] = []
         llm_used = False
 
+        # Layer 1 — Rules
         rule_threat, rule_score, rule_details = _run_rules(prompt)
         all_details.extend(rule_details)
 
+        # Layer 2 — Heuristics
         h_score, h_details = _run_heuristics(prompt)
         all_details.extend(h_details)
 
@@ -296,6 +320,27 @@ class ThreatDetector:
         combined_score = min(rule_score + (h_score * h_weight), 1.0)
         detected_threat = rule_threat
 
+        # Layer 2.5 — ML (DistilBERT)
+        if self.use_ml and ml_classifier.is_loaded():
+            ml_result = ml_classifier.classify(prompt)
+            if ml_result:
+                ml_confidence = ml_result["confidence"]
+                if ml_result["is_threat"]:
+                    ml_score = ml_confidence * 0.80
+                    combined_score = (combined_score * 0.50) + (ml_score * 0.50)
+                    if detected_threat == ThreatType.CLEAN:
+                        detected_threat = ThreatType.UNSAFE_BEHAVIOR
+                    all_details.append(
+                        f"[L2.5:ml] threat='{ml_result['threat_label']}' | "
+                        f"confidence={ml_confidence}"
+                    )
+                else:
+                    combined_score *= (1 - ml_confidence * 0.20)
+                    all_details.append(
+                        f"[L2.5:ml] clean | confidence={ml_confidence}"
+                    )
+
+        # Layer 3 — LLM (Ollama, optional)
         ambiguous = 0.20 <= combined_score <= 0.70
         no_rule_match = rule_threat == ThreatType.CLEAN
 

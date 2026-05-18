@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Security
 from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from starlette.status import HTTP_403_FORBIDDEN
 
 # ---------------------------------------------------------------------------
@@ -58,6 +59,11 @@ app.add_middleware(
 # Serve static dashboard files if the folder exists
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/", include_in_schema=False)
+async def serve_dashboard():
+    return FileResponse("static/index.html")
+    # Serve static files
 
 # ---------------------------------------------------------------------------
 # Pipeline components — instantiated once at startup
